@@ -1,0 +1,71 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  UseInterceptors,
+  Query,
+} from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { UsersService } from './users.service';
+import { CreateUserDto, UpdateUserDto } from './dto/create-user.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Auditable } from '../audit/decorators/auditable.decorator';
+import { AuditInterceptor } from '../audit/interceptors/audit.interceptor';
+import { PaginationDto } from '../common/dto/pagination.dto';
+
+@ApiTags('users')
+@Controller('users')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
+export class UsersController {
+  constructor(private readonly usersService: UsersService) {}
+
+  @Post()
+  @UseInterceptors(AuditInterceptor)
+  @Auditable('CREATE_USER', 'User')
+  @ApiOperation({ summary: 'Create a new user' })
+  @ApiResponse({ status: 201, description: 'User created successfully' })
+  async create(@Body() createUserDto: CreateUserDto) {
+    return this.usersService.create(createUserDto);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get all users with pagination' })
+  @ApiResponse({ status: 200, description: 'Paginated list of users' })
+  async findAll(@Query() pagination: PaginationDto) {
+    return this.usersService.findAll(pagination);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get user by ID' })
+  @ApiResponse({ status: 200, description: 'User details' })
+  async findOne(@Param('id') id: string) {
+    return this.usersService.findOne(id);
+  }
+
+  @Patch(':id')
+  @UseInterceptors(AuditInterceptor)
+  @Auditable('UPDATE_USER', 'User')
+  @ApiOperation({ summary: 'Update user' })
+  @ApiResponse({ status: 200, description: 'User updated successfully' })
+  async update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    return this.usersService.update(id, updateUserDto);
+  }
+
+  @Delete(':id')
+  @UseInterceptors(AuditInterceptor)
+  @Auditable('DELETE_USER', 'User')
+  @ApiOperation({ summary: 'Delete user' })
+  @ApiResponse({ status: 200, description: 'User deleted successfully' })
+  async remove(@Param('id') id: string) {
+    return this.usersService.remove(id);
+  }
+}
