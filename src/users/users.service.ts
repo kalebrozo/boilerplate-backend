@@ -49,8 +49,13 @@ export class UsersService {
       this.prisma.user.count({ where }),
     ]);
 
+    const usersWithoutPassword = data.map(user => {
+      const { password, ...userWithoutPassword } = user;
+      return userWithoutPassword;
+    });
+
     return {
-      data,
+      data: usersWithoutPassword,
       meta: {
         total,
         page: pagination.page,
@@ -72,7 +77,8 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    return user;
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
@@ -100,11 +106,14 @@ export class UsersService {
       }
     }
 
-    return this.prisma.user.update({
+    const updatedUser = await this.prisma.user.update({
       where: { id },
       data,
       include: { role: true },
     });
+
+    const { password, ...userWithoutPassword } = updatedUser;
+    return userWithoutPassword;
   }
 
   async remove(id: string) {

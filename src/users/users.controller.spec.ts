@@ -80,7 +80,6 @@ describe('UsersController', () => {
           email: 'user1@example.com',
           name: 'User 1',
           roleId: 'role-1',
-          tenantId: 'tenant-1',
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -115,7 +114,6 @@ describe('UsersController', () => {
         email: 'test@example.com',
         name: 'Test User',
         roleId: 'role-123',
-        tenantId: 'tenant-123',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -142,7 +140,6 @@ describe('UsersController', () => {
         email: 'test@example.com',
         name: 'Updated Name',
         roleId: 'new-role-id',
-        tenantId: 'tenant-123',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -164,7 +161,6 @@ describe('UsersController', () => {
         email: 'test@example.com',
         name: 'Test User',
         roleId: 'role-123',
-        tenantId: 'tenant-123',
         createdAt: new Date(),
         updatedAt: new Date(),
       };

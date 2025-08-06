@@ -90,7 +90,6 @@ describe('UsersService', () => {
           email: 'user1@example.com',
           name: 'User 1',
           roleId: 'role-1',
-          tenantId: 'tenant-1',
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -99,7 +98,6 @@ describe('UsersService', () => {
           email: 'user2@example.com',
           name: 'User 2',
           roleId: 'role-2',
-          tenantId: 'tenant-1',
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -132,7 +130,6 @@ describe('UsersService', () => {
           email: 'test@example.com',
           name: 'Test User',
           roleId: 'role-1',
-          tenantId: 'tenant-1',
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -168,7 +165,6 @@ describe('UsersService', () => {
         email: 'test@example.com',
         name: 'Test User',
         roleId: 'role-123',
-        tenantId: 'tenant-123',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -213,8 +209,11 @@ describe('UsersService', () => {
       };
 
       const updatedUser = {
-        ...existingUser,
-        ...updateUserDto,
+        id: userId,
+        email: 'updated@example.com',
+        name: 'Updated Name',
+        roleId: 'role-123',
+        createdAt: existingUser.createdAt,
         updatedAt: new Date(),
       };
 

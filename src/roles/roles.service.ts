@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRoleDto, UpdateRoleDto } from './dto/create-role.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
@@ -33,7 +33,6 @@ export class RolesService {
     const where = search ? {
       OR: [
         { name: { contains: search, mode: 'insensitive' as const } },
-        { description: { contains: search, mode: 'insensitive' as const } },
       ],
     } : {};
 
@@ -105,6 +104,26 @@ export class RolesService {
     });
   }
 
+  async assignPermissions(id: string, permissionIds: string[]) {
+    const role = await this.prisma.role.findUnique({
+      where: { id },
+    });
+
+    if (!role) {
+      throw new NotFoundException('Role not found');
+    }
+
+    return this.prisma.role.update({
+      where: { id },
+      data: {
+        permissions: {
+          connect: permissionIds.map(id => ({ id })),
+        },
+      },
+      include: { permissions: true },
+    });
+  }
+
   async remove(id: string) {
     const role = await this.prisma.role.findUnique({
       where: { id },
@@ -112,6 +131,15 @@ export class RolesService {
 
     if (!role) {
       throw new NotFoundException('Role not found');
+    }
+
+    // Verificar se há usuários associados
+    const userCount = await this.prisma.user.count({
+      where: { roleId: id },
+    });
+
+    if (userCount > 0) {
+      throw new BadRequestException('Cannot delete role with users');
     }
 
     return this.prisma.role.delete({

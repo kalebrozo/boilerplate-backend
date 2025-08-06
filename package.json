@@ -22,7 +22,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down"
+    "docker:down": "docker-compose down",
+    "seed": "node scripts/seed-database.js"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",

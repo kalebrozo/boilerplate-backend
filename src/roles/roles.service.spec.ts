@@ -14,6 +14,9 @@ const mockPrismaService = {
     update: jest.fn(),
     delete: jest.fn(),
   },
+  user: {
+    count: jest.fn(),
+  },
 };
 
 describe('RolesService', () => {
@@ -133,7 +136,6 @@ describe('RolesService', () => {
         where: {
           OR: [
             { name: { contains: 'admin', mode: 'insensitive' } },
-            { description: { contains: 'admin', mode: 'insensitive' } },
           ],
         },
         skip: 0,
@@ -232,6 +234,7 @@ describe('RolesService', () => {
       };
 
       mockPrismaService.role.findUnique.mockResolvedValue(existingRole);
+      mockPrismaService.user.count.mockResolvedValue(0);
       mockPrismaService.role.delete.mockResolvedValue(existingRole);
 
       const result = await service.remove(roleId);

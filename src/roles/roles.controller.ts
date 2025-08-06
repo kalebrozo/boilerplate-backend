@@ -65,7 +65,20 @@ export class RolesController {
   @Auditable('DELETE_ROLE', 'Role')
   @ApiOperation({ summary: 'Delete role' })
   @ApiResponse({ status: 200, description: 'Role deleted successfully' })
+  @ApiResponse({ status: 400, description: 'Cannot delete role with users' })
   async remove(@Param('id') id: string) {
     return this.rolesService.remove(id);
+  }
+
+  @Post(':id/permissions')
+  @UseInterceptors(AuditInterceptor)
+  @Auditable('ASSIGN_PERMISSIONS_TO_ROLE', 'Role')
+  @ApiOperation({ summary: 'Assign permissions to role' })
+  @ApiResponse({ status: 200, description: 'Permissions assigned successfully' })
+  async assignPermissions(
+    @Param('id') id: string,
+    @Body() assignPermissionsDto: { permissionIds: string[] }
+  ) {
+    return this.rolesService.assignPermissions(id, assignPermissionsDto.permissionIds);
   }
 }

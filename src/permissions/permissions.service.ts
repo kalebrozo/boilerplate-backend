@@ -104,10 +104,17 @@ export class PermissionsService {
   async remove(id: string) {
     const permission = await this.prisma.permission.findUnique({
       where: { id },
+      include: {
+        roles: true,
+      },
     });
 
     if (!permission) {
       throw new NotFoundException('Permission not found');
+    }
+
+    if (permission.roles && permission.roles.length > 0) {
+      throw new ConflictException('Cannot delete permission assigned to roles');
     }
 
     return this.prisma.permission.delete({

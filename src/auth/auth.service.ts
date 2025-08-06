@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
@@ -27,11 +27,38 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
-    const user = await this.validateUser(loginDto.email, loginDto.password);
-    if (!user) {
+    let user: any;
+    
+    if (loginDto.email && loginDto.password) {
+      user = await this.validateUser(loginDto.email, loginDto.password);
+      if (!user) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+    } else {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    const payload = { 
+      email: user.email, 
+      sub: user.id, 
+      role: user.role.name 
+    };
+    
+    return {
+      accessToken: this.jwtService.sign(payload),
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: {
+          id: user.role.id,
+          name: user.role.name,
+        },
+      },
+    };
+  }
+
+  async loginWithUser(user: any): Promise<AuthResponseDto> {
     const payload = { 
       email: user.email, 
       sub: user.id, 
@@ -58,7 +85,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new UnauthorizedException('User already exists');
+      throw new ConflictException('User already exists');
     }
 
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
