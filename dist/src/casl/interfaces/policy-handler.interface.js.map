@@ -1,1 +1,0 @@
-{"version":3,"file":"policy-handler.interface.js","sourceRoot":"","sources":["../../../../src/casl/interfaces/policy-handler.interface.ts"],"names":[],"mappings":";;;AAQA,MAAa,iBAAiB;IAC5B,YAAoB,QAA+B;QAA/B,aAAQ,GAAR,QAAQ,CAAuB;IAAG,CAAC;IAEvD,MAAM,CAAC,OAAmB;QACxB,OAAO,IAAI,CAAC,QAAQ,CAAC,OAAO,CAAC,CAAC;IAChC,CAAC;CACF;AAND,8CAMC"}
