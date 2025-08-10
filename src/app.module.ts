@@ -13,6 +13,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { PoliciesGuard } from './casl/guards/policies.guard';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { AuditInterceptor } from './audit/interceptors/audit.interceptor';
+import { TesteGeralModule } from './teste-geral/teste-geral.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { AuditInterceptor } from './audit/interceptors/audit.interceptor';
     TenantsModule,
     AuditModule,
     CaslModule,
+    TesteGeralModule,
   ],
   providers: [
     {

@@ -55,6 +55,27 @@ export async function setupFreshDatabase() {
   const userRole = await testPrisma.role.create({
     data: { name: `user-${Date.now()}` }
   });
+
+  // Criar permissões para TesteGeral
+  const permissions = await testPrisma.permission.createMany({
+    data: [
+      { action: 'create', subject: 'TesteGeral' },
+      { action: 'read', subject: 'TesteGeral' },
+      { action: 'update', subject: 'TesteGeral' },
+      { action: 'delete', subject: 'TesteGeral' },
+    ]
+  });
+
+  // Conectar permissões ao adminRole
+  const createdPermissions = await testPrisma.permission.findMany();
+  await testPrisma.role.update({
+    where: { id: adminRole.id },
+    data: {
+      permissions: {
+        connect: createdPermissions.map(p => ({ id: p.id }))
+      }
+    }
+  });
   
   return { tenant, adminRole, userRole };
 }
