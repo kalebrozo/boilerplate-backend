@@ -11,10 +11,15 @@ boilerplate/
 ├── src/                          # Código fonte principal
 │   ├── [módulo]/                # Cada módulo segue padrão consistente
 │   │   ├── dto/                 # Data Transfer Objects
+│   │   │   ├── create-[módulo].dto.ts
+│   │   │   ├── update-[módulo].dto.ts
+│   │   │   └── search-[módulo].dto.ts
 │   │   ├── [módulo].controller.ts
 │   │   ├── [módulo].service.ts
 │   │   ├── [módulo].module.ts
-│   │   └── [módulo].service.spec.ts
+│   │   ├── [módulo].policies.ts    # Opcional - autorização CASL
+│   │   ├── [módulo].service.spec.ts
+│   │   └── [módulo].controller.spec.ts  # Testes do controller
 ├── test/                        # Testes E2E
 │   ├── [módulo].e2e-spec.ts
 ├── prisma/                      # Schema e migrations
@@ -43,42 +48,96 @@ mkdir dto
 
 #### 1.2 Arquivos obrigatórios
 
-**[módulo].entity.ts** (se necessário)
+**[módulo].policies.ts** (opcional - para autorização CASL)
 ```typescript
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Injectable } from '@nestjs/common';
+import { CaslAbilityFactory } from '../casl/casl-ability.factory';
+import { User } from '@prisma/client';
 
-@Entity()
-export class [NomeModulo] {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+@Injectable()
+export class [NomeModulo]Policies {
+  constructor(private caslAbilityFactory: CaslAbilityFactory) {}
 
-  @Column()
-  name: string;
+  async canCreate(user: User, tenantId: string) {
+    const ability = this.caslAbilityFactory.createForUser(user);
+    return ability.can('create', '[NomeModulo]');
+  }
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  createdAt: Date;
+  async canRead(user: User, tenantId: string) {
+    const ability = this.caslAbilityFactory.createForUser(user);
+    return ability.can('read', '[NomeModulo]');
+  }
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  updatedAt: Date;
+  async canUpdate(user: User, tenantId: string) {
+    const ability = this.caslAbilityFactory.createForUser(user);
+    return ability.can('update', '[NomeModulo]');
+  }
+
+  async canDelete(user: User, tenantId: string) {
+    const ability = this.caslAbilityFactory.createForUser(user);
+    return ability.can('delete', '[NomeModulo]');
+  }
 }
 ```
 
-**[módulo].dto.ts**
+**dto/create-[módulo].dto.ts**
 ```typescript
-import { IsString, IsOptional, IsUUID } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsOptional, IsBoolean, IsDateString, IsNumber } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class Create[NomeModulo]Dto {
-  @ApiProperty()
+  @ApiProperty({ example: 'Nome do Módulo', description: 'Nome do registro' })
   @IsString()
   name: string;
-}
 
-export class Update[NomeModulo]Dto {
-  @ApiProperty()
+  @ApiPropertyOptional({ example: 'Descrição detalhada', description: 'Descrição do registro' })
   @IsString()
   @IsOptional()
-  name?: string;
+  description?: string;
+
+  @ApiPropertyOptional({ example: true, description: 'Status ativo do registro' })
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
+}
+```
+
+**dto/update-[módulo].dto.ts**
+```typescript
+import { PartialType } from '@nestjs/swagger';
+import { Create[NomeModulo]Dto } from './create-[módulo].dto';
+
+export class Update[NomeModulo]Dto extends PartialType(Create[NomeModulo]Dto) {}
+```
+
+**dto/search-[módulo].dto.ts**
+```typescript
+import { IsOptional, IsString, IsBoolean, IsNumber, Min, Max } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+
+export class Search[NomeModulo]Dto {
+  @ApiPropertyOptional({ example: 'termo de busca', description: 'Termo para busca' })
+  @IsString()
+  @IsOptional()
+  search?: string;
+
+  @ApiPropertyOptional({ example: true, description: 'Filtrar por status' })
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
+
+  @ApiPropertyOptional({ example: 1, description: 'Número da página', minimum: 1 })
+  @IsNumber()
+  @Min(1)
+  @IsOptional()
+  page?: number = 1;
+
+  @ApiPropertyOptional({ example: 10, description: 'Itens por página', minimum: 1, maximum: 100 })
+  @IsNumber()
+  @Min(1)
+  @Max(100)
+  @IsOptional()
+  limit?: number = 10;
 }
 ```
 
@@ -87,24 +146,63 @@ export class Update[NomeModulo]Dto {
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Create[NomeModulo]Dto, Update[NomeModulo]Dto } from './dto/[módulo].dto';
+import { Search[NomeModulo]Dto } from './dto/search-[módulo].dto';
 
 @Injectable()
 export class [NomeModulo]Service {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createDto: Create[NomeModulo]Dto) {
+  async create(createDto: Create[NomeModulo]Dto, userId: string, tenantId: string) {
     return this.prisma.[nomeModulo].create({
-      data: createDto,
+      data: {
+        ...createDto,
+        userId,
+        tenantId,
+      },
     });
   }
 
-  async findAll() {
-    return this.prisma.[nomeModulo].findMany();
+  async search(searchDto: Search[NomeModulo]Dto, tenantId: string) {
+    const { search, isActive, page = 1, limit = 10 } = searchDto;
+    const skip = (page - 1) * limit;
+
+    const where: any = { tenantId };
+    
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    if (typeof isActive === 'boolean') {
+      where.isActive = isActive;
+    }
+
+    const [items, total] = await Promise.all([
+      this.prisma.[nomeModulo].findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.[nomeModulo].count({ where }),
+    ]);
+
+    return {
+      items,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
-  async findOne(id: string) {
-    const [nomeModulo] = await this.prisma.[nomeModulo].findUnique({
-      where: { id },
+  async findOne(id: string, tenantId: string) {
+    const [nomeModulo] = await this.prisma.[nomeModulo].findFirst({
+      where: { id, tenantId },
     });
     if (![nomeModulo]) {
       throw new NotFoundException('[NomeModulo] not found');
@@ -112,19 +210,37 @@ export class [NomeModulo]Service {
     return [nomeModulo];
   }
 
-  async update(id: string, updateDto: Update[NomeModulo]Dto) {
-    await this.findOne(id);
+  async update(id: string, updateDto: Update[NomeModulo]Dto, tenantId: string) {
+    await this.findOne(id, tenantId);
     return this.prisma.[nomeModulo].update({
       where: { id },
       data: updateDto,
     });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, tenantId: string) {
+    await this.findOne(id, tenantId);
     return this.prisma.[nomeModulo].delete({
       where: { id },
     });
+  }
+
+  async toggleStatus(id: string, tenantId: string) {
+    const [nomeModulo] = await this.findOne(id, tenantId);
+    return this.prisma.[nomeModulo].update({
+      where: { id },
+      data: { isActive: ![nomeModulo].isActive },
+    });
+  }
+
+  async getStats(tenantId: string) {
+    const [total, active, inactive] = await Promise.all([
+      this.prisma.[nomeModulo].count({ where: { tenantId } }),
+      this.prisma.[nomeModulo].count({ where: { tenantId, isActive: true } }),
+      this.prisma.[nomeModulo].count({ where: { tenantId, isActive: false } }),
+    ]);
+
+    return { total, active, inactive };
   }
 }
 ```
@@ -140,42 +256,77 @@ import {
   Param,
   Delete,
   UseGuards,
+  Request,
+  Query,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import [NomeModulo]Service from './[módulo].service';
-import { Create[NomeModulo]Dto, Update[NomeModulo]Dto } from './dto/[módulo].dto';
+import { PoliciesGuard } from '../casl/guards/policies.guard';
+import { CheckPolicies } from '../casl/decorators/check-policies.decorator';
+import { [NomeModulo]Service } from './[módulo].service';
+import { Create[NomeModulo]Dto } from './dto/create-[módulo].dto';
+import { Update[NomeModulo]Dto } from './dto/update-[módulo].dto';
+import { Search[NomeModulo]Dto } from './dto/search-[módulo].dto';
 
 @ApiTags('[NomeModulo]s')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PoliciesGuard)
 @Controller('[nome-modulo]s')
 export class [NomeModulo]Controller {
   constructor(private readonly [nomeModulo]Service: [NomeModulo]Service) {}
 
   @Post()
-  create(@Body() createDto: Create[NomeModulo]Dto) {
-    return this.[nomeModulo]Service.create(createDto);
+  @ApiOperation({ summary: 'Criar novo [nome-modulo]' })
+  @ApiResponse({ status: 201, description: '[NomeModulo] criado com sucesso.' })
+  @CheckPolicies((ability) => ability.can('create', '[NomeModulo]'))
+  create(@Body() createDto: Create[NomeModulo]Dto, @Request() req) {
+    return this.[nomeModulo]Service.create(createDto, req.user.id, req.user.tenantId);
   }
 
-  @Get()
-  findAll() {
-    return this.[nomeModulo]Service.findAll();
+  @Get('search')
+  @ApiOperation({ summary: 'Buscar [nome-modulo]s com filtros' })
+  @CheckPolicies((ability) => ability.can('read', '[NomeModulo]'))
+  search(@Query() searchDto: Search[NomeModulo]Dto, @Request() req) {
+    return this.[nomeModulo]Service.search(searchDto, req.user.tenantId);
+  }
+
+  @Get('stats')
+  @ApiOperation({ summary: 'Obter estatísticas de [nome-modulo]s' })
+  @CheckPolicies((ability) => ability.can('read', '[NomeModulo]'))
+  getStats(@Request() req) {
+    return this.[nomeModulo]Service.getStats(req.user.tenantId);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.[nomeModulo]Service.findOne(id);
+  @ApiOperation({ summary: 'Obter [nome-modulo] por ID' })
+  @CheckPolicies((ability) => ability.can('read', '[NomeModulo]'))
+  findOne(@Param('id') id: string, @Request() req) {
+    return this.[nomeModulo]Service.findOne(id, req.user.tenantId);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateDto: Update[NomeModulo]Dto) {
-    return this.[nomeModulo]Service.update(id, updateDto);
+  @ApiOperation({ summary: 'Atualizar [nome-modulo]' })
+  @CheckPolicies((ability) => ability.can('update', '[NomeModulo]'))
+  update(
+    @Param('id') id: string,
+    @Body() updateDto: Update[NomeModulo]Dto,
+    @Request() req,
+  ) {
+    return this.[nomeModulo]Service.update(id, updateDto, req.user.tenantId);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.[nomeModulo]Service.remove(id);
+  @ApiOperation({ summary: 'Remover [nome-modulo]' })
+  @CheckPolicies((ability) => ability.can('delete', '[NomeModulo]'))
+  remove(@Param('id') id: string, @Request() req) {
+    return this.[nomeModulo]Service.remove(id, req.user.tenantId);
+  }
+
+  @Patch(':id/toggle-status')
+  @ApiOperation({ summary: 'Alternar status do [nome-modulo]' })
+  @CheckPolicies((ability) => ability.can('update', '[NomeModulo]'))
+  toggleStatus(@Param('id') id: string, @Request() req) {
+    return this.[nomeModulo]Service.toggleStatus(id, req.user.tenantId);
   }
 }
 ```
@@ -227,15 +378,31 @@ model [NomeModulo] {
 ### 4. Criar Testes
 
 #### 4.1 Testes Unitários
+
 **[módulo].service.spec.ts**
 ```typescript
 import { Test, TestingModule } from '@nestjs/testing';
+import { NotFoundException } from '@nestjs/common';
 import { [NomeModulo]Service } from './[módulo].service';
 import { PrismaService } from '../prisma/prisma.service';
+import { Create[NomeModulo]Dto } from './dto/create-[módulo].dto';
+import { Update[NomeModulo]Dto } from './dto/update-[módulo].dto';
 
 describe('[NomeModulo]Service', () => {
   let service: [NomeModulo]Service;
   let prisma: PrismaService;
+
+  const mockPrismaService = {
+    [nomeModulo]: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn(),
+    },
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -243,15 +410,7 @@ describe('[NomeModulo]Service', () => {
         [NomeModulo]Service,
         {
           provide: PrismaService,
-          useValue: {
-            [nomeModulo]: {
-              create: jest.fn(),
-              findMany: jest.fn(),
-              findUnique: jest.fn(),
-              update: jest.fn(),
-              delete: jest.fn(),
-            },
-          },
+          useValue: mockPrismaService,
         },
       ],
     }).compile();
@@ -264,7 +423,183 @@ describe('[NomeModulo]Service', () => {
     expect(service).toBeDefined();
   });
 
-  // Adicionar mais testes conforme necessário
+  describe('create', () => {
+    it('should create a new [nome-modulo]', async () => {
+      const createDto: Create[NomeModulo]Dto = { name: 'Test Name' };
+      const expected = { id: '1', ...createDto, userId: 'user1', tenantId: 'tenant1' };
+      
+      mockPrismaService.[nomeModulo].create.mockResolvedValue(expected);
+
+      const result = await service.create(createDto, 'user1', 'tenant1');
+      expect(result).toEqual(expected);
+      expect(mockPrismaService.[nomeModulo].create).toHaveBeenCalledWith({
+        data: { ...createDto, userId: 'user1', tenantId: 'tenant1' },
+      });
+    });
+  });
+
+  describe('search', () => {
+    it('should return paginated results', async () => {
+      const searchDto = { page: 1, limit: 10 };
+      const items = [{ id: '1', name: 'Test' }];
+      const total = 1;
+      
+      mockPrismaService.[nomeModulo].findMany.mockResolvedValue(items);
+      mockPrismaService.[nomeModulo].count.mockResolvedValue(total);
+
+      const result = await service.search(searchDto, 'tenant1');
+      expect(result.items).toEqual(items);
+      expect(result.meta.total).toBe(total);
+    });
+  });
+
+  describe('findOne', () => {
+    it('should return [nome-modulo] when found', async () => {
+      const expected = { id: '1', name: 'Test' };
+      mockPrismaService.[nomeModulo].findFirst.mockResolvedValue(expected);
+
+      const result = await service.findOne('1', 'tenant1');
+      expect(result).toEqual(expected);
+    });
+
+    it('should throw NotFoundException when not found', async () => {
+      mockPrismaService.[nomeModulo].findFirst.mockResolvedValue(null);
+
+      await expect(service.findOne('1', 'tenant1')).rejects.toThrow(NotFoundException);
+    });
+  });
+});
+```
+
+**[módulo].controller.spec.ts**
+```typescript
+import { Test, TestingModule } from '@nestjs/testing';
+import { [NomeModulo]Controller } from './[módulo].controller';
+import { [NomeModulo]Service } from './[módulo].service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PoliciesGuard } from '../casl/guards/policies.guard';
+
+describe('[NomeModulo]Controller', () => {
+  let controller: [NomeModulo]Controller;
+  let service: [NomeModulo]Service;
+
+  const mockService = {
+    create: jest.fn(),
+    search: jest.fn(),
+    findOne: jest.fn(),
+    update: jest.fn(),
+    remove: jest.fn(),
+    toggleStatus: jest.fn(),
+    getStats: jest.fn(),
+  };
+
+  const mockRequest = {
+    user: {
+      id: 'user1',
+      tenantId: 'tenant1',
+    },
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [[NomeModulo]Controller],
+      providers: [
+        {
+          provide: [NomeModulo]Service,
+          useValue: mockService,
+        },
+      ],
+    }).compile();
+
+    controller = module.get<[NomeModulo]Controller>([NomeModulo]Controller);
+    service = module.get<[NomeModulo]Service>([NomeModulo]Service);
+  });
+
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
+  });
+
+  describe('create', () => {
+    it('should create a new [nome-modulo]', async () => {
+      const createDto = { name: 'Test' };
+      const expected = { id: '1', ...createDto };
+      
+      mockService.create.mockResolvedValue(expected);
+
+      const result = await controller.create(createDto, mockRequest);
+      expect(result).toEqual(expected);
+      expect(mockService.create).toHaveBeenCalledWith(createDto, 'user1', 'tenant1');
+    });
+  });
+
+  describe('search', () => {
+    it('should return search results', async () => {
+      const searchDto = { page: 1, limit: 10 };
+      const expected = { items: [], meta: { total: 0 } };
+      
+      mockService.search.mockResolvedValue(expected);
+
+      const result = await controller.search(searchDto, mockRequest);
+      expect(result).toEqual(expected);
+      expect(mockService.search).toHaveBeenCalledWith(searchDto, 'tenant1');
+    });
+  });
+
+  describe('getStats', () => {
+    it('should return statistics', async () => {
+      const expected = { total: 10, active: 8, inactive: 2 };
+      mockService.getStats.mockResolvedValue(expected);
+
+      const result = await controller.getStats(mockRequest);
+      expect(result).toEqual(expected);
+      expect(mockService.getStats).toHaveBeenCalledWith('tenant1');
+    });
+  });
+
+  describe('findOne', () => {
+    it('should return [nome-modulo] by id', async () => {
+      const expected = { id: '1', name: 'Test' };
+      mockService.findOne.mockResolvedValue(expected);
+
+      const result = await controller.findOne('1', mockRequest);
+      expect(result).toEqual(expected);
+      expect(mockService.findOne).toHaveBeenCalledWith('1', 'tenant1');
+    });
+  });
+
+  describe('update', () => {
+    it('should update [nome-modulo]', async () => {
+      const updateDto = { name: 'Updated' };
+      const expected = { id: '1', ...updateDto };
+      mockService.update.mockResolvedValue(expected);
+
+      const result = await controller.update('1', updateDto, mockRequest);
+      expect(result).toEqual(expected);
+      expect(mockService.update).toHaveBeenCalledWith('1', updateDto, 'tenant1');
+    });
+  });
+
+  describe('remove', () => {
+    it('should remove [nome-modulo]', async () => {
+      const expected = { id: '1', deleted: true };
+      mockService.remove.mockResolvedValue(expected);
+
+      const result = await controller.remove('1', mockRequest);
+      expect(result).toEqual(expected);
+      expect(mockService.remove).toHaveBeenCalledWith('1', 'tenant1');
+    });
+  });
+
+  describe('toggleStatus', () => {
+    it('should toggle status', async () => {
+      const expected = { id: '1', isActive: false };
+      mockService.toggleStatus.mockResolvedValue(expected);
+
+      const result = await controller.toggleStatus('1', mockRequest);
+      expect(result).toEqual(expected);
+      expect(mockService.toggleStatus).toHaveBeenCalledWith('1', 'tenant1');
+    });
+  });
 });
 ```
 
@@ -480,6 +815,69 @@ npm run prisma:studio
 DEBUG=* npm run start:dev
 ```
 
+## 🎯 Boas Práticas e Dicas
+
+### Verificação de Testes
+Para garantir que seus testes estão sendo executados corretamente:
+
+```bash
+# Verificar se todos os testes do módulo estão rodando
+npm test -- src/[nome-modulo]/ --verbose
+
+# Verificar testes unitários específicos
+npm test -- src/[nome-modulo]/[nome-modulo].service.spec.ts
+npm test -- src/[nome-modulo]/[nome-modulo].controller.spec.ts
+
+# Verificar testes E2E do módulo
+npm run test:e2e -- test/[nome-modulo].e2e-spec.ts
+```
+
+### Estrutura de Arquivos Recomendada
+```
+[nome-modulo]/
+├── dto/
+│   ├── create-[nome-modulo].dto.ts
+│   ├── update-[nome-modulo].dto.ts
+│   ├── search-[nome-modulo].dto.ts
+│   └── index.ts (exportar todos os DTOs)
+├── [nome-modulo].controller.ts
+├── [nome-modulo].service.ts
+├── [nome-modulo].module.ts
+├── [nome-modulo].policies.ts (se usar CASL)
+├── [nome-modulo].controller.spec.ts
+└── [nome-modulo].service.spec.ts
+```
+
+### Common Issues e Soluções
+
+#### Testes não encontrados
+**Sintoma**: Arquivos `.spec.ts` não são executados
+**Solução**: Verificar se o arquivo está dentro de `src/` e segue o padrão `*.spec.ts`
+
+#### Erros de importação
+**Sintoma**: Módulos não encontrados
+**Solução**: Verificar se todos os imports estão corretos e se o módulo foi adicionado ao `AppModule`
+
+#### Erros de tipagem no Prisma
+**Sintoma**: Propriedades não existem no modelo
+**Solução**: Executar `npm run prisma:generate` após atualizar o schema
+
+#### Testes falhando com guards
+**Sintoma**: Guards não encontrados ou erro de autenticação
+**Solução**: Usar mocks apropriados nos testes unitários
+
+### Debug de Testes
+```bash
+# Executar testes em modo debug
+npm test -- --runInBand --detectOpenHandles --verbose
+
+# Verificar coverage
+npm run test:cov
+
+# Executar testes específicos com pattern
+npm test -- --testNamePattern="[NomeModulo]"
+```
+
 ## 📞 Suporte
 
 Para dúvidas ou problemas:
@@ -488,9 +886,26 @@ Para dúvidas ou problemas:
 3. Consultar logs de erro
 4. Verificar estrutura de arquivos
 5. Testar em ambiente isolado
+6. Verificar exemplos no módulo `teste-geral`
+
+### Comandos Úteis de Debug
+```bash
+# Verificar estrutura do banco
+npm run prisma:studio
+
+# Verificar se a aplicação está rodando
+npm run start:dev
+
+# Verificar build
+npm run build
+
+# Limpar cache e reinstalar
+rm -rf node_modules package-lock.json
+npm install
+```
 
 ---
 
-**Última atualização**: [Data atual]
-**Versão**: 1.0.0
-**Status**: ✅ Projeto funcional e testado
+**Última atualização**: $(date +"%d/%m/%Y")
+**Versão**: 2.0.0
+**Status**: ✅ Documentação atualizada com base em implementações reais
