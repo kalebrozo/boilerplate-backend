@@ -192,7 +192,7 @@ describe('RolesController (e2e)', () => {
     let roleId: string;
 
     beforeEach(async () => {
-      const role = await prisma.role.create({
+      const role = await testPrisma.role.create({
         data: {
           name: `Delete-Role-${Date.now()}`,
         },
@@ -215,9 +215,9 @@ describe('RolesController (e2e)', () => {
 
     it('should not delete role with users', async () => {
       // Criar usuário com essa role
-      await prisma.user.create({
+      await testPrisma.user.create({
         data: {
-          email: 'user@example.com',
+          email: `user-${Date.now()}@example.com`,
           name: 'User',
           password: 'hashedpassword',
           roleId,
