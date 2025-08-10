@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
-import { testPrisma, cleanupTestData } from './test-setup';
+import { testPrisma, setupFreshDatabase } from './test-setup';
 
 describe('UsersController (e2e)', () => {
   let app: INestApplication;
@@ -25,26 +25,21 @@ describe('UsersController (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await cleanupTestData();
-
-    // Criar role admin
-    const adminRole = await testPrisma.role.create({
-      data: { name: `Admin-${Date.now()}` },
-    });
+    const { tenant: freshTenant, adminRole: freshAdminRole } = await setupFreshDatabase();
 
     // Registrar usuário admin usando o serviço de auth
     const registerResponse = await request(app.getHttpServer())
-      .post('/auth/register')
-      .send({
-        email: 'admin@example.com',
-        password: 'password123',
-        name: 'Admin User',
-        roleId: adminRole.id,
-      });
+        .post('/auth/register')
+        .send({
+          email: `admin-${Date.now()}@example.com`,
+          password: 'password123',
+          name: 'Admin User',
+          roleId: freshAdminRole.id,
+        });
 
     expect(registerResponse.status).toBe(201);
     authToken = registerResponse.body.accessToken;
-    expect(authToken).toBeDefined();
+      expect(authToken).toBeDefined();
   });
 
   describe('POST /users', () => {

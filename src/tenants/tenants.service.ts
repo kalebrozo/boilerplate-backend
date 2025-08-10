@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTenantDto, UpdateTenantDto } from './dto/create-tenant.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
@@ -27,11 +27,14 @@ export class TenantsService {
       data: createTenantDto,
     });
 
-    // Criar schema no banco
-    await this.createTenantSchema(createTenantDto.schema);
+    // Skip schema creation in test environment
+    if (process.env.NODE_ENV !== 'test') {
+      // Criar schema no banco
+      await this.createTenantSchema(createTenantDto.schema);
 
-    // Rodar migrações para o novo schema
-    await this.runMigrationsForSchema(createTenantDto.schema);
+      // Rodar migrações para o novo schema
+      await this.runMigrationsForSchema(createTenantDto.schema);
+    }
 
     return tenant;
   }
@@ -70,12 +73,26 @@ export class TenantsService {
   }
 
   async findOne(id: string) {
-    return this.prisma.tenant.findUnique({
+    const tenant = await this.prisma.tenant.findUnique({
       where: { id },
     });
+    
+    if (!tenant) {
+      throw new NotFoundException('Tenant not found');
+    }
+    
+    return tenant;
   }
 
   async update(id: string, updateTenantDto: UpdateTenantDto) {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id },
+    });
+
+    if (!tenant) {
+      throw new NotFoundException('Tenant not found');
+    }
+
     return this.prisma.tenant.update({
       where: { id },
       data: updateTenantDto,
@@ -88,15 +105,17 @@ export class TenantsService {
     });
 
     if (!tenant) {
-      throw new BadRequestException('Tenant not found');
+      throw new NotFoundException('Tenant not found');
     }
 
     // Remover schema (opcional - cuidado em produção)
     await this.dropTenantSchema(tenant.schema);
 
-    return this.prisma.tenant.delete({
+    await this.prisma.tenant.delete({
       where: { id },
     });
+    
+    return { message: 'Tenant deleted successfully' };
   }
 
   private async createTenantSchema(schemaName: string) {

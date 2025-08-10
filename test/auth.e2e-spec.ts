@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
-import { testPrisma, cleanupTestData } from './test-setup';
+import { testPrisma, setupFreshDatabase } from './test-setup';
 
 describe('AuthController (e2e)', () => {
   let app: INestApplication;
@@ -25,22 +25,8 @@ describe('AuthController (e2e)', () => {
   let testRole: any;
 
   beforeEach(async () => {
-    // Limpar banco de dados
-    await cleanupTestData();
-
-    // Criar dados iniciais
-    const tenant = await testPrisma.tenant.create({
-      data: {
-        name: 'Test Tenant',
-        schema: 'test_schema',
-      },
-    });
-
-    testRole = await testPrisma.role.create({
-      data: {
-        name: 'Admin',
-      },
-    });
+    const { tenant: freshTenant, adminRole: freshAdminRole } = await setupFreshDatabase();
+    testRole = freshAdminRole;
   });
 
   describe('POST /auth/register', () => {

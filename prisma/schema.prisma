@@ -52,7 +52,7 @@ model AuditLog {
   tenantId   String
   action     String
   subject    String
-  subjectId  String
+  subjectId  String?
   dataBefore Json?
   dataAfter  Json?
   clientInfo Json?

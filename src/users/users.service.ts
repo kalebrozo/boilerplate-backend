@@ -19,13 +19,16 @@ export class UsersService {
 
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
-    return this.prisma.user.create({
+    const user = await this.prisma.user.create({
       data: {
         ...createUserDto,
         password: hashedPassword,
       },
       include: { role: true },
     });
+
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
   }
 
   async findAll(pagination: PaginationDto) {

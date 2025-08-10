@@ -3,6 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { testPrisma, setupFreshDatabase } from './test-setup';
 
 describe('RolesController (e2e)', () => {
   let app: INestApplication;
@@ -26,31 +27,26 @@ describe('RolesController (e2e)', () => {
   });
 
   beforeEach(async () => {
-    // Limpar banco de dados
-    await prisma.auditLog.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.role.deleteMany();
-    await prisma.permission.deleteMany();
-    await prisma.tenant.deleteMany();
+      const { tenant: freshTenant, adminRole: freshAdminRole } = await setupFreshDatabase();
 
-    // Criar role admin
-    const adminRole = await prisma.role.create({
-      data: { name: `Admin-${Date.now()}` },
+      // Registrar usuário admin usando o serviço de auth
+      const registerResponse = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          email: `admin-${Date.now()}@example.com`,
+          password: 'password123',
+          name: 'Admin User',
+          roleId: freshAdminRole.id,
+        });
+
+      if (registerResponse.status !== 201) {
+        console.log('Register failed:', registerResponse.status, registerResponse.body);
+        throw new Error(`Registration failed: ${registerResponse.status} - ${JSON.stringify(registerResponse.body)}`);
+      }
+
+      authToken = registerResponse.body.accessToken;
+      expect(authToken).toBeDefined();
     });
-
-    // Registrar usuário admin usando o serviço de auth
-    const registerResponse = await request(app.getHttpServer())
-      .post('/auth/register')
-      .send({
-        email: 'admin@example.com',
-        password: 'password123',
-        name: 'Admin User',
-        roleId: adminRole.id,
-      });
-
-    authToken = registerResponse.body.accessToken;
-    expect(authToken).toBeDefined();
-  });
 
   describe('POST /roles', () => {
     it('should create a new role', async () => {
@@ -93,7 +89,7 @@ describe('RolesController (e2e)', () => {
     beforeEach(async () => {
       // Criar múltiplas roles
       for (let i = 1; i <= 5; i++) {
-        await prisma.role.create({
+        await testPrisma.role.create({
           data: {
             name: `Role-${i}-${Date.now()}`,
           },
@@ -116,7 +112,7 @@ describe('RolesController (e2e)', () => {
 
     it('should filter roles by search term', async () => {
       // Criar uma role específica para o teste
-      await prisma.role.create({
+      await testPrisma.role.create({
         data: {
           name: `Role-Search-${Date.now()}`,
         },
@@ -137,7 +133,7 @@ describe('RolesController (e2e)', () => {
     let roleId: string;
 
     beforeEach(async () => {
-      const role = await prisma.role.create({
+      const role = await testPrisma.role.create({
         data: {
           name: `Specific-Role-${Date.now()}`,
         },
@@ -167,7 +163,7 @@ describe('RolesController (e2e)', () => {
     let roleId: string;
 
     beforeEach(async () => {
-      const role = await prisma.role.create({
+      const role = await testPrisma.role.create({
         data: {
           name: `Patch-Role-${Date.now()}`,
         },

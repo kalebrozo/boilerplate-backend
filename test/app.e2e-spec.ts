@@ -47,15 +47,17 @@ describe('AppController (e2e)', () => {
         },
       });
 
-      // Criar usuário admin diretamente no banco
-      const adminUser = await testPrisma.user.create({
-        data: {
+      // Criar usuário admin via API de registro para garantir senha hasheada
+      const registerResponse = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
           email: 'admin@example.com',
           password: 'password123',
           name: 'Admin User',
           roleId: adminRole.id,
-        },
-      });
+        });
+
+      expect(registerResponse.status).toBe(201);
 
       // Autenticar usuário
       const loginResponse = await request(app.getHttpServer())

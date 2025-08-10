@@ -51,7 +51,7 @@ describe('UsersService', () => {
         roleId: 'role-123',
       };
 
-      const expectedUser = {
+      const createdUser = {
         id: 'user-123',
         ...createUserDto,
         password: 'hashedPassword',
@@ -59,7 +59,12 @@ describe('UsersService', () => {
         updatedAt: new Date(),
       };
 
-      mockPrismaService.user.create.mockResolvedValue(expectedUser);
+      const expectedUser = {
+        ...createdUser,
+      };
+      delete expectedUser.password;
+
+      mockPrismaService.user.create.mockResolvedValue(createdUser);
 
       const result = await service.create(createUserDto);
 

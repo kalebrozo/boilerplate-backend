@@ -3,6 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { testPrisma, setupFreshDatabase } from './test-setup';
 
 describe('PermissionsController (e2e)', () => {
   let app: INestApplication;
@@ -26,37 +27,25 @@ describe('PermissionsController (e2e)', () => {
   });
 
   beforeEach(async () => {
-    // Limpar banco de dados na ordem correta (respeitando constraints)
-    await prisma.auditLog.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.role.deleteMany();
-    await prisma.permission.deleteMany();
-    await prisma.tenant.deleteMany();
+      const { tenant, adminRole } = await setupFreshDatabase();
 
-    // Criar tenant
-    const tenant = await prisma.tenant.create({
-      data: { name: 'Test Tenant', schema: 'test_schema' },
-    });
+      // Registrar usuário admin usando o serviço de auth
+      const registerResponse = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          email: `admin-${Date.now()}@example.com`,
+          password: 'password123',
+          name: 'Admin User',
+          roleId: adminRole.id,
+        });
 
-
-    // Criar role admin
-    const adminRole = await prisma.role.create({
-      data: { 
-          name: `Admin-${Date.now()}`
-        },
-    });
-
-    // Registrar usuário admin usando o serviço de auth
-    const registerResponse = await request(app.getHttpServer())
-      .post('/auth/register')
-      .send({
-        email: 'admin@example.com',
-        password: 'password123',
-        name: 'Admin User',
-        roleId: adminRole.id,
-      });
+    if (registerResponse.status !== 201) {
+      console.log('Register failed:', registerResponse.status, registerResponse.body);
+      throw new Error(`Registration failed: ${registerResponse.status} - ${JSON.stringify(registerResponse.body)}`);
+    }
 
     authToken = registerResponse.body.accessToken;
+      expect(authToken).toBeDefined();
   });
 
   describe('POST /permissions', () => {
@@ -110,7 +99,7 @@ describe('PermissionsController (e2e)', () => {
       ];
 
       for (const perm of permissions) {
-        await prisma.permission.create({ 
+        await testPrisma.permission.create({ 
           data: {
             action: perm.action,
             subject: perm.subject
@@ -150,7 +139,7 @@ describe('PermissionsController (e2e)', () => {
     let permissionId: string;
 
     beforeEach(async () => {
-      const permission = await prisma.permission.create({
+      const permission = await testPrisma.permission.create({
         data: {
           action: 'specific',
           subject: `Permission-${Date.now()}`,
@@ -181,7 +170,7 @@ describe('PermissionsController (e2e)', () => {
     let permissionId: string;
 
     beforeEach(async () => {
-      const permission = await prisma.permission.create({
+      const permission = await testPrisma.permission.create({
         data: {
           action: 'read',
           subject: `User-${Date.now()}`,
