@@ -15,12 +15,18 @@ import { PoliciesGuard } from './casl/guards/policies.guard';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { AuditInterceptor } from './audit/interceptors/audit.interceptor';
 import { TesteGeralModule } from './teste-geral/teste-geral.module';
+import { envValidationSchema } from './config/env.validation';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env'],
+      validationSchema: envValidationSchema,
+      validationOptions: {
+        allowUnknown: true,
+        abortEarly: true,
+      },
     }),
     ThrottlerModule.forRoot([
       {
