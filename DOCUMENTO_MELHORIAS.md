@@ -670,8 +670,8 @@ autocannon.track(instance, { renderProgressBar: true });
 ## 📋 Checklist de Implementação
 
 ### Prioridade CRÍTICA (Implementar imediatamente)
-- [ ] Rate Limiting com ThrottlerModule
-- [ ] Middleware de segurança (Helmet)
+- [x] Rate Limiting com ThrottlerModule
+- [x] Middleware de segurança (Helmet)
 - [ ] Validação de variáveis de ambiente
 - [ ] Logging estruturado
 

@@ -4,9 +4,29 @@ import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import helmet from 'helmet';
+import * as compression from 'compression';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  const configService = app.get(ConfigService);
+
+  // Middleware de segurança - Helmet
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "https:"],
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+  }));
+
+  // Compressão de resposta
+  app.use(compression());
 
   // Configuração global
   app.useGlobalPipes(
@@ -23,13 +43,17 @@ async function bootstrap() {
   // Filtro de exceção global
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  // Habilitar CORS
-  app.enableCors();
+  // CORS mais restritivo
+  app.enableCors({
+    origin: configService.get('ALLOWED_ORIGINS')?.split(',') || ['http://localhost:3000'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-tenant-id'],
+    credentials: true,
+  });
 
   // Graceful shutdown
   app.enableShutdownHooks();
 
-  const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT', 3000);
 
   // Configuração do Swagger
