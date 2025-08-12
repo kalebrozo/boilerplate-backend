@@ -9,15 +9,24 @@ import { PrismaService } from '../prisma/prisma.service';
 
 const mockUsersService = {
   create: jest.fn(),
-  findAll: jest.fn(),
+  search: jest.fn(),
+  getStats: jest.fn(),
   findOne: jest.fn(),
   update: jest.fn(),
   remove: jest.fn(),
+  toggleStatus: jest.fn(),
 };
 
 describe('UsersController', () => {
   let controller: UsersController;
   let service: UsersService;
+
+  const mockRequest = {
+    user: {
+      id: 'user-123',
+      tenantId: 'tenant-123',
+    },
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -57,52 +66,62 @@ describe('UsersController', () => {
 
       mockUsersService.create.mockResolvedValue(expectedUser);
 
-      const result = await controller.create(createUserDto);
+      const result = await controller.create(createUserDto, mockRequest);
 
       expect(result).toEqual(expectedUser);
-      expect(service.create).toHaveBeenCalledWith(createUserDto);
+      expect(service.create).toHaveBeenCalledWith(createUserDto, mockRequest.user.tenantId);
     });
   });
 
-  describe('findAll', () => {
-    it('should return paginated users', async () => {
-      const pagination: PaginationDto = {
+  describe('search', () => {
+    it('should return search results', async () => {
+      const searchDto = {
+        search: 'test',
         page: 1,
         limit: 10,
-        skip: 0,
-        take: 10,
-        orderBy: { createdAt: 'desc' },
       };
 
-      const users = [
-        {
-          id: 'user-1',
-          email: 'user1@example.com',
-          name: 'User 1',
-          roleId: 'role-1',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ];
-
-      const paginatedResult = {
-        data: users,
+      const expectedResult = {
+        items: [
+          {
+            id: 'user-1',
+            email: 'user1@example.com',
+            name: 'User 1',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ],
         meta: {
           total: 1,
           page: 1,
           limit: 10,
           totalPages: 1,
-          hasNext: false,
-          hasPrev: false,
         },
       };
 
-      mockUsersService.findAll.mockResolvedValue(paginatedResult);
+      mockUsersService.search.mockResolvedValue(expectedResult);
 
-      const result = await controller.findAll(pagination);
+      const result = await controller.search(searchDto, mockRequest);
 
-      expect(result).toEqual(paginatedResult);
-      expect(service.findAll).toHaveBeenCalledWith(pagination);
+      expect(result).toEqual(expectedResult);
+      expect(service.search).toHaveBeenCalledWith(searchDto, mockRequest.user.tenantId);
+    });
+  });
+
+  describe('getStats', () => {
+    it('should return user statistics', async () => {
+      const expectedStats = {
+        total: 100,
+        active: 80,
+        inactive: 20,
+      };
+
+      mockUsersService.getStats.mockResolvedValue(expectedStats);
+
+      const result = await controller.getStats(mockRequest);
+
+      expect(result).toEqual(expectedStats);
+      expect(service.getStats).toHaveBeenCalledWith(mockRequest.user.tenantId);
     });
   });
 
@@ -120,10 +139,10 @@ describe('UsersController', () => {
 
       mockUsersService.findOne.mockResolvedValue(expectedUser);
 
-      const result = await controller.findOne(userId);
+      const result = await controller.findOne(userId, mockRequest);
 
       expect(result).toEqual(expectedUser);
-      expect(service.findOne).toHaveBeenCalledWith(userId);
+      expect(service.findOne).toHaveBeenCalledWith(userId, mockRequest.user.tenantId);
     });
   });
 
@@ -146,10 +165,10 @@ describe('UsersController', () => {
 
       mockUsersService.update.mockResolvedValue(updatedUser);
 
-      const result = await controller.update(userId, updateUserDto);
+      const result = await controller.update(userId, updateUserDto, mockRequest);
 
       expect(result).toEqual(updatedUser);
-      expect(service.update).toHaveBeenCalledWith(userId, updateUserDto);
+      expect(service.update).toHaveBeenCalledWith(userId, updateUserDto, mockRequest.user.tenantId);
     });
   });
 
@@ -167,10 +186,10 @@ describe('UsersController', () => {
 
       mockUsersService.remove.mockResolvedValue(deletedUser);
 
-      const result = await controller.remove(userId);
+      const result = await controller.remove(userId, mockRequest);
 
       expect(result).toEqual(deletedUser);
-      expect(service.remove).toHaveBeenCalledWith(userId);
+      expect(service.remove).toHaveBeenCalledWith(userId, mockRequest.user.tenantId);
     });
   });
 });

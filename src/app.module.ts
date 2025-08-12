@@ -33,6 +33,7 @@ import { ExportModule } from './export/export.module';
 import { VersioningModule } from './common/versioning/versioning.module';
 import { VersionInterceptor } from './common/interceptors/version.interceptor';
 import { VersionMiddleware } from './common/middleware/version.middleware';
+import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { VersionMiddleware } from './common/middleware/version.middleware';
     MetricsModule,
     ExportModule,
     VersioningModule,
+    CommonModule,
     PrismaModule,
     AuthModule,
     UsersModule,

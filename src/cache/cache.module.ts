@@ -23,6 +23,9 @@ import { LoggerModule } from '../common/logger/logger.module';
     }),
   ],
   providers: [CacheService],
-  exports: [CacheModule, CacheService],
+  exports: [CacheService],
 })
 export class RedisCacheModule {}
+
+// Re-export CacheModule for convenience
+export { CacheModule };

@@ -6,9 +6,10 @@ import { UsersV2Controller } from './v2/users-v2.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AuditModule } from '../audit/audit.module';
 import { RedisCacheModule } from '../cache/cache.module';
+import { CaslModule } from '../casl/casl.module';
 
 @Module({
-  imports: [PrismaModule, AuditModule, RedisCacheModule],
+  imports: [PrismaModule, AuditModule, RedisCacheModule, CaslModule],
   controllers: [UsersController, UsersV1Controller, UsersV2Controller],
   providers: [UsersService],
   exports: [UsersService],
