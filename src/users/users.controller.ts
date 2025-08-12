@@ -18,6 +18,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Auditable } from '../audit/decorators/auditable.decorator';
 import { AuditInterceptor } from '../audit/interceptors/audit.interceptor';
 import { PaginationDto } from '../common/dto/pagination.dto';
+import { UseCache, InvalidateCache } from '../cache/cache.interceptor';
 
 @ApiTags('users')
 @Controller('users')
@@ -30,6 +31,7 @@ export class UsersController {
   @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 criações por minuto
   @UseInterceptors(AuditInterceptor)
   @Auditable('CREATE_USER', 'User')
+  @InvalidateCache(['*:tenant:{tenantId}:*user*', '*:tenant:{tenantId}:*list*'])
   @ApiOperation({ summary: 'Create a new user' })
   @ApiResponse({ status: 201, description: 'User created successfully' })
   async create(@Body() createUserDto: CreateUserDto) {
@@ -37,6 +39,7 @@ export class UsersController {
   }
 
   @Get()
+  @UseCache(300) // Cache por 5 minutos
   @ApiOperation({ summary: 'Get all users with pagination' })
   @ApiResponse({ status: 200, description: 'Paginated list of users' })
   async findAll(@Query() pagination: PaginationDto) {
@@ -44,6 +47,7 @@ export class UsersController {
   }
 
   @Get(':id')
+  @UseCache(600) // Cache por 10 minutos
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiResponse({ status: 200, description: 'User details' })
   async findOne(@Param('id') id: string) {
@@ -54,6 +58,7 @@ export class UsersController {
   @Throttle({ default: { limit: 20, ttl: 60000 } }) // 20 atualizações por minuto
   @UseInterceptors(AuditInterceptor)
   @Auditable('UPDATE_USER', 'User')
+  @InvalidateCache(['*:tenant:{tenantId}:*user*', '*:tenant:{tenantId}:*list*', '*:user:{id}:*'])
   @ApiOperation({ summary: 'Update user' })
   @ApiResponse({ status: 200, description: 'User updated successfully' })
   async update(
@@ -67,6 +72,7 @@ export class UsersController {
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 exclusões por minuto
   @UseInterceptors(AuditInterceptor)
   @Auditable('DELETE_USER', 'User')
+  @InvalidateCache(['*:tenant:{tenantId}:*user*', '*:tenant:{tenantId}:*list*', '*:user:{id}:*'])
   @ApiOperation({ summary: 'Delete user' })
   @ApiResponse({ status: 200, description: 'User deleted successfully' })
   async remove(@Param('id') id: string) {

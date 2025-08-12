@@ -8,6 +8,7 @@ export const envValidationSchema = Joi.object({
   JWT_EXPIRES_IN: Joi.string().default('1d'),
   REDIS_HOST: Joi.string().default('localhost'),
   REDIS_PORT: Joi.number().default(6379),
+  REDIS_PASSWORD: Joi.string().default('redis_password'),
   ALLOWED_ORIGINS: Joi.string().default('http://localhost:3000'),
   
   // Configurações de Rate Limiting

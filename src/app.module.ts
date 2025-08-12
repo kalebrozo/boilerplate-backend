@@ -25,6 +25,8 @@ import { PerformanceInterceptor } from './monitoring/interceptors/performance.in
 import { SystemMonitorMiddleware } from './monitoring/middleware/system-monitor.middleware';
 import { SanitizationInterceptor } from './common/interceptors/sanitization.interceptor';
 import { BackupModule } from './backup/backup.module';
+import { RedisCacheModule } from './cache/cache.module';
+import { CacheInterceptor } from './cache/cache.interceptor';
 
 @Module({
   imports: [
@@ -58,6 +60,7 @@ import { BackupModule } from './backup/backup.module';
     HealthModule,
     MonitoringModule,
     BackupModule,
+    RedisCacheModule,
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -96,6 +99,10 @@ import { BackupModule } from './backup/backup.module';
     {
       provide: APP_INTERCEPTOR,
       useClass: PerformanceInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: CacheInterceptor,
     },
     {
       provide: APP_GUARD,
