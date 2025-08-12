@@ -4,6 +4,7 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
+  ValidationError,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
@@ -16,10 +17,21 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const status = exception.getStatus();
 
     const exceptionResponse = exception.getResponse();
-    const message =
+    let message =
       typeof exceptionResponse === 'string'
         ? exceptionResponse
         : (exceptionResponse as any).message || 'Internal server error';
+
+    // Log validation errors to console
+    if (status === HttpStatus.BAD_REQUEST) {
+      console.error(`[VALIDATION ERROR] ${request.method} ${request.url}`);
+      console.error('Status:', status);
+      console.error('Message:', message);
+      
+      if ((exceptionResponse as any).errors) {
+        console.error('Validation errors:', JSON.stringify((exceptionResponse as any).errors, null, 2));
+      }
+    }
 
     response.status(status).json({
       statusCode: status,
