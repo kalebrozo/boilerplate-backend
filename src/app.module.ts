@@ -20,6 +20,9 @@ import { LoggerModule } from './common/logger/logger.module';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { HealthModule } from './health/health.module';
+import { MonitoringModule } from './monitoring/monitoring.module';
+import { PerformanceInterceptor } from './monitoring/interceptors/performance.interceptor';
+import { SystemMonitorMiddleware } from './monitoring/middleware/system-monitor.middleware';
 
 @Module({
   imports: [
@@ -51,6 +54,7 @@ import { HealthModule } from './health/health.module';
     ]),
     LoggerModule,
     HealthModule,
+    MonitoringModule,
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -83,6 +87,10 @@ import { HealthModule } from './health/health.module';
       useClass: AuditInterceptor,
     },
     {
+      provide: APP_INTERCEPTOR,
+      useClass: PerformanceInterceptor,
+    },
+    {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
@@ -92,6 +100,10 @@ export class AppModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(RequestIdMiddleware)
+      .forRoutes('*');
+    
+    consumer
+      .apply(SystemMonitorMiddleware)
       .forRoutes('*');
   }
 }
