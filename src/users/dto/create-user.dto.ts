@@ -1,5 +1,6 @@
 import { IsEmail, IsString, IsOptional, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Sanitize } from '../../common/decorators/sanitize.decorator';
 
 export class CreateUserDto {
   @ApiProperty({
@@ -15,6 +16,7 @@ export class CreateUserDto {
   })
   @IsString()
   @IsOptional()
+  @Sanitize()
   name?: string;
 
   @ApiProperty({
@@ -51,6 +53,7 @@ export class UpdateUserDto {
   })
   @IsString()
   @IsOptional()
+  @Sanitize()
   name?: string;
 
   @ApiProperty({

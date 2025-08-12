@@ -23,6 +23,7 @@ import { HealthModule } from './health/health.module';
 import { MonitoringModule } from './monitoring/monitoring.module';
 import { PerformanceInterceptor } from './monitoring/interceptors/performance.interceptor';
 import { SystemMonitorMiddleware } from './monitoring/middleware/system-monitor.middleware';
+import { SanitizationInterceptor } from './common/interceptors/sanitization.interceptor';
 
 @Module({
   imports: [
@@ -77,6 +78,10 @@ import { SystemMonitorMiddleware } from './monitoring/middleware/system-monitor.
     {
       provide: APP_GUARD,
       useClass: PoliciesGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: SanitizationInterceptor,
     },
     {
       provide: APP_INTERCEPTOR,
