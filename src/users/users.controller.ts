@@ -11,6 +11,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { UsersService } from './users.service';
 import { CreateUserDto, UpdateUserDto } from './dto/create-user.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -26,6 +27,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 criações por minuto
   @UseInterceptors(AuditInterceptor)
   @Auditable('CREATE_USER', 'User')
   @ApiOperation({ summary: 'Create a new user' })
@@ -49,6 +51,7 @@ export class UsersController {
   }
 
   @Patch(':id')
+  @Throttle({ default: { limit: 20, ttl: 60000 } }) // 20 atualizações por minuto
   @UseInterceptors(AuditInterceptor)
   @Auditable('UPDATE_USER', 'User')
   @ApiOperation({ summary: 'Update user' })
@@ -61,6 +64,7 @@ export class UsersController {
   }
 
   @Delete(':id')
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 exclusões por minuto
   @UseInterceptors(AuditInterceptor)
   @Auditable('DELETE_USER', 'User')
   @ApiOperation({ summary: 'Delete user' })

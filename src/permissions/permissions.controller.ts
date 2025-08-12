@@ -11,6 +11,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { PermissionsService } from './permissions.service';
 import { CreatePermissionDto, UpdatePermissionDto } from './dto/create-permission.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -26,6 +27,7 @@ export class PermissionsController {
   constructor(private readonly permissionsService: PermissionsService) {}
 
   @Post()
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 criações por minuto
   @UseInterceptors(AuditInterceptor)
   @Auditable('CREATE_PERMISSION', 'Permission')
   @ApiOperation({ summary: 'Create a new permission' })
@@ -49,6 +51,7 @@ export class PermissionsController {
   }
 
   @Patch(':id')
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 atualizações por minuto
   @UseInterceptors(AuditInterceptor)
   @Auditable('UPDATE_PERMISSION', 'Permission')
   @ApiOperation({ summary: 'Update permission' })
@@ -61,6 +64,7 @@ export class PermissionsController {
   }
 
   @Delete(':id')
+  @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 exclusões por minuto
   @UseInterceptors(AuditInterceptor)
   @Auditable('DELETE_PERMISSION', 'Permission')
   @ApiOperation({ summary: 'Delete permission' })

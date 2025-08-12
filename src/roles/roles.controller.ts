@@ -11,6 +11,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { RolesService } from './roles.service';
 import { CreateRoleDto, UpdateRoleDto } from './dto/create-role.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -26,6 +27,7 @@ export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
   @Post()
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 criações por minuto
   @UseInterceptors(AuditInterceptor)
   @Auditable('CREATE_ROLE', 'Role')
   @ApiOperation({ summary: 'Create a new role' })
@@ -49,6 +51,7 @@ export class RolesController {
   }
 
   @Patch(':id')
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 atualizações por minuto
   @UseInterceptors(AuditInterceptor)
   @Auditable('UPDATE_ROLE', 'Role')
   @ApiOperation({ summary: 'Update role' })
@@ -61,6 +64,7 @@ export class RolesController {
   }
 
   @Delete(':id')
+  @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 exclusões por minuto
   @UseInterceptors(AuditInterceptor)
   @Auditable('DELETE_ROLE', 'Role')
   @ApiOperation({ summary: 'Delete role' })
@@ -71,6 +75,7 @@ export class RolesController {
   }
 
   @Post(':id/permissions')
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 atribuições por minuto
   @UseInterceptors(AuditInterceptor)
   @Auditable('ASSIGN_PERMISSIONS_TO_ROLE', 'Role')
   @ApiOperation({ summary: 'Assign permissions to role' })

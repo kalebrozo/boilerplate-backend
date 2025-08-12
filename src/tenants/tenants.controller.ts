@@ -10,6 +10,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { TenantsService } from './tenants.service';
 import { CreateTenantDto, UpdateTenantDto } from './dto/create-tenant.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -26,6 +27,7 @@ export class TenantsController {
   constructor(private readonly tenantsService: TenantsService) {}
 
   @Post()
+  @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 criações por minuto (operação crítica)
   @UseInterceptors(AuditInterceptor)
   @Auditable('CREATE_TENANT', 'Tenant')
   @ApiOperation({ summary: 'Create a new tenant' })
@@ -49,6 +51,7 @@ export class TenantsController {
   }
 
   @Patch(':id')
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 atualizações por minuto
   @UseInterceptors(AuditInterceptor)
   @Auditable('UPDATE_TENANT', 'Tenant')
   @ApiOperation({ summary: 'Update tenant' })
@@ -61,6 +64,7 @@ export class TenantsController {
   }
 
   @Delete(':id')
+  @Throttle({ default: { limit: 2, ttl: 60000 } }) // 2 exclusões por minuto (operação muito crítica)
   @UseInterceptors(AuditInterceptor)
   @Auditable('DELETE_TENANT', 'Tenant')
   @ApiOperation({ summary: 'Delete tenant' })

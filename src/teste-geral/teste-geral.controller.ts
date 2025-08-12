@@ -20,6 +20,7 @@ import {
   ApiResponse,
   ApiQuery,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { TesteGeralService } from './teste-geral.service';
 import { CreateTesteGeralDto, UpdateTesteGeralDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -43,6 +44,7 @@ export class TesteGeralController {
   constructor(private readonly testeGeralService: TesteGeralService) {}
 
   @Post()
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 criações por minuto
   @CheckPolicies(new CreateTesteGeralPolicyHandler())
   @ApiOperation({ summary: 'Criar novo registro' })
   @ApiResponse({ status: 201, description: 'Registro criado com sucesso' })
@@ -107,6 +109,7 @@ export class TesteGeralController {
   }
 
   @Patch(':id')
+  @Throttle({ default: { limit: 15, ttl: 60000 } }) // 15 atualizações por minuto
   @CheckPolicies(new UpdateTesteGeralPolicyHandler())
   @ApiOperation({ summary: 'Atualizar registro' })
   @ApiResponse({ status: 200, description: 'Registro atualizado com sucesso' })
@@ -121,6 +124,7 @@ export class TesteGeralController {
   }
 
   @Delete(':id')
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 exclusões por minuto
   @HttpCode(HttpStatus.NO_CONTENT)
   @CheckPolicies(new DeleteTesteGeralPolicyHandler())
   @ApiOperation({ summary: 'Remover registro' })
@@ -131,6 +135,7 @@ export class TesteGeralController {
   }
 
   @Patch(':id/toggle-status')
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 alterações de status por minuto
   @CheckPolicies(new UpdateTesteGeralPolicyHandler())
   @ApiOperation({ summary: 'Alternar status ativo/inativo' })
   @ApiResponse({ status: 200, description: 'Status alterado com sucesso' })

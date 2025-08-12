@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { RolesModule } from './roles/roles.module';
@@ -21,6 +22,23 @@ import { TesteGeralModule } from './teste-geral/teste-geral.module';
       isGlobal: true,
       envFilePath: ['.env'],
     }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'short',
+        ttl: 1000, // 1 segundo
+        limit: 3, // 3 requests por segundo
+      },
+      {
+        name: 'medium',
+        ttl: 10000, // 10 segundos
+        limit: 20, // 20 requests por 10 segundos
+      },
+      {
+        name: 'long',
+        ttl: 60000, // 1 minuto
+        limit: 100, // 100 requests por minuto
+      }
+    ]),
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -47,6 +65,10 @@ import { TesteGeralModule } from './teste-geral/teste-geral.module';
     {
       provide: APP_INTERCEPTOR,
       useClass: AuditInterceptor,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
   ],
 })
