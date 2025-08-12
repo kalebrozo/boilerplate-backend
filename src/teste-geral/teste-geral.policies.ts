@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PolicyHandler } from '../casl/interfaces/policy-handler.interface';
-import { Action } from '../casl/casl-ability.factory';
+import { Action } from '../casl/action.enum';
 
 @Injectable()
 export class ReadTesteGeralPolicyHandler implements PolicyHandler {

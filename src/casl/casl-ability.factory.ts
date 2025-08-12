@@ -1,13 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { AbilityBuilder, Ability, AbilityClass } from '@casl/ability';
-
-export enum Action {
-  Manage = 'manage',
-  Create = 'create',
-  Read = 'read',
-  Update = 'update',
-  Delete = 'delete',
-}
+import { Action } from './action.enum';
 
 export type Subjects = string;
 export type AppAbility = Ability<[Action, Subjects]>;

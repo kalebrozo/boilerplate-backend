@@ -30,6 +30,9 @@ import { CacheInterceptor } from './cache/cache.interceptor';
 import { MetricsModule } from './metrics/metrics.module';
 import { MetricsInterceptor } from './metrics/interceptors/metrics.interceptor';
 import { ExportModule } from './export/export.module';
+import { VersioningModule } from './common/versioning/versioning.module';
+import { VersionInterceptor } from './common/interceptors/version.interceptor';
+import { VersionMiddleware } from './common/middleware/version.middleware';
 
 @Module({
   imports: [
@@ -66,6 +69,7 @@ import { ExportModule } from './export/export.module';
     RedisCacheModule,
     MetricsModule,
     ExportModule,
+    VersioningModule,
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -113,6 +117,10 @@ import { ExportModule } from './export/export.module';
       provide: APP_INTERCEPTOR,
       useClass: MetricsInterceptor,
     },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: VersionInterceptor,
+    },
     ...(process.env.NODE_ENV !== 'test' ? [{
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
@@ -127,6 +135,10 @@ export class AppModule {
     
     consumer
       .apply(SystemMonitorMiddleware)
+      .forRoutes('*');
+    
+    consumer
+      .apply(VersionMiddleware)
       .forRoutes('*');
   }
 }

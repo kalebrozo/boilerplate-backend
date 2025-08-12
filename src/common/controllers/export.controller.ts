@@ -16,7 +16,7 @@ import { CheckPolicies } from '../../casl/decorators/check-policies.decorator';
 import { ExportService } from '../services/export.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PolicyHandlerImpl } from '../../casl/interfaces/policy-handler.interface';
-import { Action } from '../../casl/casl-ability.factory';
+import { Action } from '../../casl/action.enum';
 
 @ApiTags('Export')
 @Controller('export')

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto, UpdateUserDto } from './dto/create-user.dto';
+import { SearchUserDto } from './dto/search-user.dto';
 import { PaginationDto, PaginatedResponse } from '../common/dto/pagination.dto';
 import { CacheService } from '../cache/cache.service';
 import * as bcrypt from 'bcrypt';
@@ -12,7 +13,7 @@ export class UsersService {
     private cacheService: CacheService,
   ) {}
 
-  async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto, tenantId?: string) {
     const existingUser = await this.prisma.user.findUnique({
       where: { email: createUserDto.email },
     });
@@ -81,7 +82,7 @@ export class UsersService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, tenantId?: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
       select: {
@@ -113,7 +114,7 @@ export class UsersService {
     return user;
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
+  async update(id: string, updateUserDto: UpdateUserDto, tenantId?: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
     });
@@ -148,7 +149,7 @@ export class UsersService {
     return userWithoutPassword;
   }
 
-  async remove(id: string) {
+  async remove(id: string, tenantId?: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
     });
@@ -160,5 +161,102 @@ export class UsersService {
     return this.prisma.user.delete({
       where: { id },
     });
+  }
+
+  async search(searchDto: SearchUserDto, tenantId?: string) {
+    const { search, isActive, page = 1, limit = 10 } = searchDto;
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+    
+    if (tenantId) {
+      where.tenantId = tenantId;
+    }
+    
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    if (typeof isActive === 'boolean') {
+      where.isActive = isActive;
+    }
+
+    const [items, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
+          role: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return {
+      items,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async toggleStatus(id: string, tenantId?: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: { isActive: true },
+    });
+    
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    
+    return this.prisma.user.update({
+      where: { id },
+      data: { isActive: !user.isActive },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+        role: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+  }
+
+  async getStats(tenantId?: string) {
+    // Note: tenantId is not used since User model doesn't have tenantId field
+    const [total, active, inactive] = await Promise.all([
+      this.prisma.user.count(),
+      this.prisma.user.count({ where: { isActive: true } }),
+      this.prisma.user.count({ where: { isActive: false } }),
+    ]);
+
+    return { total, active, inactive };
   }
 }

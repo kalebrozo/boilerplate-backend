@@ -1,4 +1,4 @@
-import { IsEmail, IsString, IsOptional, MinLength } from 'class-validator';
+import { IsEmail, IsString, IsOptional, MinLength, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Sanitize } from '../../common/decorators/sanitize.decorator';
 
@@ -75,4 +75,13 @@ export class UpdateUserDto {
   @MinLength(6)
   @IsOptional()
   password?: string;
+
+  @ApiProperty({
+    description: 'User active status',
+    example: true,
+    required: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
 }

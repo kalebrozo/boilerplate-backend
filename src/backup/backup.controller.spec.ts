@@ -4,7 +4,7 @@ import { BackupService } from './backup.service';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PoliciesGuard } from '../casl/guards/policies.guard';
-import { Action } from '../casl/casl-ability.factory';
+import { Action } from '../casl/action.enum';
 
 describe('BackupController', () => {
   let controller: BackupController;
