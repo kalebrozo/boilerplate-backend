@@ -92,7 +92,7 @@ src/
 ### Criando um Tenant
 
 ```bash
-curl -X POST http://localhost:3000/tenants \
+curl -X POST http://localhost:3003/tenants \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <token>" \
   -d '{
@@ -104,7 +104,7 @@ curl -X POST http://localhost:3000/tenants \
 ### Registro de Usuário
 
 ```bash
-curl -X POST http://localhost:3000/auth/register \
+curl -X POST http://localhost:3003/auth/register \
   -H "Content-Type: application/json" \
   -H "x-tenant-id: cliente_exemplo" \
   -d '{
@@ -118,7 +118,7 @@ curl -X POST http://localhost:3000/auth/register \
 ### Login
 
 ```bash
-curl -X POST http://localhost:3000/auth/login \
+curl -X POST http://localhost:3003/auth/login \
   -H "Content-Type: application/json" \
   -H "x-tenant-id: cliente_exemplo" \
   -d '{
@@ -129,7 +129,7 @@ curl -X POST http://localhost:3000/auth/login \
 
 ### Documentação da API
 
-Acesse a documentação completa em: `http://localhost:3000/api-docs`
+Acesse a documentação completa em: `http://localhost:3003/api-docs`
 
 ## Comandos Úteis
 

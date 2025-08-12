@@ -58,7 +58,7 @@ describe('Environment Validation', () => {
     const { error, value } = envValidationSchema.validate(minimalEnv);
     expect(error).toBeUndefined();
     expect(value.NODE_ENV).toBe('development');
-    expect(value.PORT).toBe(3000);
+    expect(value.PORT).toBe(3003);
     expect(value.JWT_EXPIRES_IN).toBe('1d');
     expect(value.REDIS_HOST).toBe('localhost');
     expect(value.REDIS_PORT).toBe(6379);

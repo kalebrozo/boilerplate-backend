@@ -783,12 +783,12 @@ npm run start:debug
 
 ### Health Check
 ```bash
-curl http://localhost:3000/health
+curl http://localhost:3003/health
 ```
 
 ### Documentação API
-- **Swagger UI**: http://localhost:3000/api-docs
-- **JSON Schema**: http://localhost:3000/api-json
+- **Swagger UI**: http://localhost:3003/api-docs
+- **JSON Schema**: http://localhost:3003/api-json
 
 ## 🆘 Solução de Problemas
 

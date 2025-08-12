@@ -129,7 +129,7 @@ Authorization: Bearer {token}
 
 ### 1. Criar Registro Completo
 ```javascript
-const response = await fetch('http://localhost:3000/teste-geral', {
+const response = await fetch('http://localhost:3003/teste-geral', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${token}`,
@@ -169,7 +169,7 @@ const params = new URLSearchParams({
   take: '20'
 });
 
-const response = await fetch(`http://localhost:3000/teste-geral?${params}`, {
+const response = await fetch(`http://localhost:3003/teste-geral?${params}`, {
   headers: { 'Authorization': `Bearer ${token}` }
 });
 ```

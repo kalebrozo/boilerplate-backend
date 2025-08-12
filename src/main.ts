@@ -52,7 +52,7 @@ async function bootstrap() {
 
   // CORS mais restritivo
   app.enableCors({
-    origin: configService.get('ALLOWED_ORIGINS')?.split(',') || ['http://localhost:3000'],
+    origin: configService.get('ALLOWED_ORIGINS')?.split(',') || ['http://localhost:3003'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-tenant-id'],
     credentials: true,
@@ -61,7 +61,7 @@ async function bootstrap() {
   // Graceful shutdown
   app.enableShutdownHooks();
 
-  const port = configService.get<number>('PORT', 3000);
+  const port = 3003; // Porta fixa para garantir que sempre rode na 3003
 
   // Configuração do Swagger
   const config = new DocumentBuilder()

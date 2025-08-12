@@ -325,7 +325,7 @@ As métricas são compatíveis com Prometheus e podem ser coletadas através do 
 scrape_configs:
   - job_name: 'saas-boilerplate'
     static_configs:
-      - targets: ['localhost:3000']
+      - targets: ['localhost:3003']
     metrics_path: '/metrics'
     scrape_interval: 15s
 ```

@@ -9,7 +9,7 @@ export const envValidationSchema = Joi.object({
   REDIS_HOST: Joi.string().default('localhost'),
   REDIS_PORT: Joi.number().default(6379),
   REDIS_PASSWORD: Joi.string().default('redis_password'),
-  ALLOWED_ORIGINS: Joi.string().default('http://localhost:3000'),
+  ALLOWED_ORIGINS: Joi.string().default('http://localhost:3003'),
   
   // Configurações de Rate Limiting
   THROTTLE_TTL: Joi.number().default(60000),
