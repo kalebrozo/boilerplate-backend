@@ -48,6 +48,12 @@ lerna-debug.log*
 # Runtime data
 pids
 *.pid
+
+# Backup files
+backups/*
+!backups/.gitkeep
+*.sql
+*.dump
 *.seed
 *.pid.lock
 

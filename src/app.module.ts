@@ -24,6 +24,7 @@ import { MonitoringModule } from './monitoring/monitoring.module';
 import { PerformanceInterceptor } from './monitoring/interceptors/performance.interceptor';
 import { SystemMonitorMiddleware } from './monitoring/middleware/system-monitor.middleware';
 import { SanitizationInterceptor } from './common/interceptors/sanitization.interceptor';
+import { BackupModule } from './backup/backup.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { SanitizationInterceptor } from './common/interceptors/sanitization.inte
     LoggerModule,
     HealthModule,
     MonitoringModule,
+    BackupModule,
     PrismaModule,
     AuthModule,
     UsersModule,
