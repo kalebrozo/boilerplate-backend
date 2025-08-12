@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto, RegisterDto, AuthResponseDto } from './dto/login.dto';
+import { MetricsService } from '../metrics/metrics.service';
 
 @Injectable()
 export class AuthService {
@@ -11,6 +12,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private metricsService: MetricsService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
@@ -29,13 +31,20 @@ export class AuthService {
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     let user: any;
     
-    if (loginDto.email && loginDto.password) {
-      user = await this.validateUser(loginDto.email, loginDto.password);
-      if (!user) {
+    try {
+      if (loginDto.email && loginDto.password) {
+        user = await this.validateUser(loginDto.email, loginDto.password);
+        if (!user) {
+          this.metricsService.incrementAuthAttempts('failure', 'jwt');
+          throw new UnauthorizedException('Invalid credentials');
+        }
+      } else {
+        this.metricsService.incrementAuthAttempts('failure', 'jwt');
         throw new UnauthorizedException('Invalid credentials');
       }
-    } else {
-      throw new UnauthorizedException('Invalid credentials');
+    } catch (error) {
+      this.metricsService.incrementAuthAttempts('failure', 'jwt');
+      throw error;
     }
 
     const payload = { 
@@ -43,6 +52,8 @@ export class AuthService {
       sub: user.id, 
       role: user.role.name 
     };
+    
+    this.metricsService.incrementAuthAttempts('success', 'jwt');
     
     return {
       accessToken: this.jwtService.sign(payload),

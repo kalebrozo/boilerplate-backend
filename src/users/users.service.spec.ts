@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CaslAbilityFactory } from '../casl/casl-ability.factory';
 import { CreateUserDto, UpdateUserDto } from './dto/create-user.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
+import { CacheService } from '../cache/cache.service';
 
 const mockPrismaService = {
   user: {
@@ -21,6 +22,13 @@ const mockCaslAbilityFactory = {
   createForUser: jest.fn(),
 };
 
+const mockCacheService = {
+  get: jest.fn(),
+  set: jest.fn(),
+  del: jest.fn(),
+  reset: jest.fn(),
+};
+
 describe('UsersService', () => {
   let service: UsersService;
   let prisma: PrismaService;
@@ -31,6 +39,7 @@ describe('UsersService', () => {
         UsersService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: CaslAbilityFactory, useValue: mockCaslAbilityFactory },
+        { provide: CacheService, useValue: mockCacheService },
       ],
     }).compile();
 

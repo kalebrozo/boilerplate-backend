@@ -27,6 +27,8 @@ import { SanitizationInterceptor } from './common/interceptors/sanitization.inte
 import { BackupModule } from './backup/backup.module';
 import { RedisCacheModule } from './cache/cache.module';
 import { CacheInterceptor } from './cache/cache.interceptor';
+import { MetricsModule } from './metrics/metrics.module';
+import { MetricsInterceptor } from './metrics/interceptors/metrics.interceptor';
 
 @Module({
   imports: [
@@ -61,6 +63,7 @@ import { CacheInterceptor } from './cache/cache.interceptor';
     MonitoringModule,
     BackupModule,
     RedisCacheModule,
+    MetricsModule,
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -105,9 +108,13 @@ import { CacheInterceptor } from './cache/cache.interceptor';
       useClass: CacheInterceptor,
     },
     {
+      provide: APP_INTERCEPTOR,
+      useClass: MetricsInterceptor,
+    },
+    ...(process.env.NODE_ENV !== 'test' ? [{
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
-    },
+    }] : []),
   ],
 })
 export class AppModule {

@@ -5,6 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UnauthorizedException } from '@nestjs/common';
 import { LoginDto, RegisterDto } from './dto/login.dto';
+import { MetricsService } from '../metrics/metrics.service';
 
 const mockPrismaService = {
   user: {
@@ -21,6 +22,12 @@ const mockConfigService = {
   get: jest.fn(),
 };
 
+const mockMetricsService = {
+  incrementAuthAttempts: jest.fn(),
+  incrementHttpRequests: jest.fn(),
+  recordHttpRequestDuration: jest.fn(),
+};
+
 describe('AuthService', () => {
   let service: AuthService;
   let prisma: PrismaService;
@@ -33,6 +40,7 @@ describe('AuthService', () => {
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: JwtService, useValue: mockJwtService },
         { provide: ConfigService, useValue: mockConfigService },
+        { provide: MetricsService, useValue: mockMetricsService },
       ],
     }).compile();
 

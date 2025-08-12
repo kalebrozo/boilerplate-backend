@@ -56,13 +56,15 @@ export async function setupFreshDatabase() {
     data: { name: `user-${Date.now()}` }
   });
 
-  // Criar permissões para TesteGeral
+  // Criar permissões para TesteGeral e Metrics
   const permissions = await testPrisma.permission.createMany({
     data: [
       { action: 'create', subject: 'TesteGeral' },
       { action: 'read', subject: 'TesteGeral' },
       { action: 'update', subject: 'TesteGeral' },
       { action: 'delete', subject: 'TesteGeral' },
+      { action: 'read', subject: 'Metrics' },
+      { action: 'manage', subject: 'Metrics' },
     ]
   });
 

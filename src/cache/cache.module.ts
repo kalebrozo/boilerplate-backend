@@ -7,6 +7,7 @@ import { LoggerModule } from '../common/logger/logger.module';
 
 @Module({
   imports: [
+    ConfigModule,
     LoggerModule,
     CacheModule.registerAsync({
       imports: [ConfigModule],
