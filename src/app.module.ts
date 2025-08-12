@@ -29,6 +29,7 @@ import { RedisCacheModule } from './cache/cache.module';
 import { CacheInterceptor } from './cache/cache.interceptor';
 import { MetricsModule } from './metrics/metrics.module';
 import { MetricsInterceptor } from './metrics/interceptors/metrics.interceptor';
+import { ExportModule } from './export/export.module';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { MetricsInterceptor } from './metrics/interceptors/metrics.interceptor';
     BackupModule,
     RedisCacheModule,
     MetricsModule,
+    ExportModule,
     PrismaModule,
     AuthModule,
     UsersModule,
