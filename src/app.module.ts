@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -16,6 +16,9 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { AuditInterceptor } from './audit/interceptors/audit.interceptor';
 import { TesteGeralModule } from './teste-geral/teste-geral.module';
 import { envValidationSchema } from './config/env.validation';
+import { LoggerModule } from './common/logger/logger.module';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 
 @Module({
   imports: [
@@ -45,6 +48,7 @@ import { envValidationSchema } from './config/env.validation';
         limit: 100, // 100 requests por minuto
       }
     ]),
+    LoggerModule,
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -70,6 +74,10 @@ import { envValidationSchema } from './config/env.validation';
     },
     {
       provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
       useClass: AuditInterceptor,
     },
     {
@@ -78,4 +86,10 @@ import { envValidationSchema } from './config/env.validation';
     },
   ],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(RequestIdMiddleware)
+      .forRoutes('*');
+  }
+}
