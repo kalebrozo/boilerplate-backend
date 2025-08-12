@@ -134,7 +134,37 @@ export class TesteGeralService {
   async findOne(id: string): Promise<TesteGeral> {
     const testeGeral = await this.prisma.testeGeral.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        nome: true,
+        descricao: true,
+        valorDecimal: true,
+        valorInteiro: true,
+        valorFloat: true,
+        ativo: true,
+        status: true,
+        categoria: true,
+        dataCriacao: true,
+        dataAtualizacao: true,
+        dataVencimento: true,
+        horaInicio: true,
+        duracao: true,
+        tags: true,
+        metadados: true,
+        configuracao: true,
+        email: true,
+        telefone: true,
+        website: true,
+        cep: true,
+        endereco: true,
+        coordenadas: true,
+        arquivoNome: true,
+        arquivoTamanho: true,
+        arquivoTipo: true,
+        arquivoUrl: true,
+        tenantId: true,
+        criadoPorId: true,
+        atualizadoPorId: true,
         criadoPor: {
           select: { id: true, name: true, email: true },
         },
@@ -142,8 +172,8 @@ export class TesteGeralService {
           select: { id: true, name: true, email: true },
         },
         tenant: {
-            select: { id: true, name: true },
-          },
+          select: { id: true, name: true },
+        },
       },
     });
 

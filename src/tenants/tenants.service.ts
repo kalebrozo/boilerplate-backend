@@ -52,6 +52,13 @@ export class TenantsService {
     const [data, total] = await Promise.all([
       this.prisma.tenant.findMany({
         where,
+        select: {
+          id: true,
+          name: true,
+          schema: true,
+          createdAt: true,
+          updatedAt: true,
+        },
         skip,
         take,
         orderBy,
@@ -75,6 +82,13 @@ export class TenantsService {
   async findOne(id: string) {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id },
+      select: {
+        id: true,
+        name: true,
+        schema: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
     
     if (!tenant) {

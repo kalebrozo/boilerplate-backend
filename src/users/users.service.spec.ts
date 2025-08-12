@@ -157,7 +157,19 @@ describe('UsersService', () => {
         skip: 0,
         take: 10,
         orderBy: { createdAt: 'desc' },
-        include: { role: true },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          createdAt: true,
+          updatedAt: true,
+          role: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
       });
     });
   });
@@ -181,7 +193,26 @@ describe('UsersService', () => {
       expect(result).toEqual(expectedUser);
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: userId },
-        include: { role: { include: { permissions: true } } },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: {
+            select: {
+              id: true,
+              name: true,
+              permissions: {
+                select: {
+                  id: true,
+                  action: true,
+                  subject: true,
+                },
+              },
+            },
+          },
+          createdAt: true,
+          updatedAt: true,
+        },
       });
     });
 

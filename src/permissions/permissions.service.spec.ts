@@ -137,6 +137,13 @@ describe('PermissionsService', () => {
             { subject: { contains: 'users', mode: 'insensitive' } },
           ],
         },
+        select: {
+          id: true,
+          action: true,
+          subject: true,
+          createdAt: true,
+          updatedAt: true,
+        },
         skip: 0,
         take: 10,
         orderBy: { name: 'asc' },
@@ -163,6 +170,13 @@ describe('PermissionsService', () => {
       expect(result).toEqual(expectedPermission);
       expect(prisma.permission.findUnique).toHaveBeenCalledWith({
         where: { id: permissionId },
+        select: {
+          id: true,
+          action: true,
+          subject: true,
+          createdAt: true,
+          updatedAt: true,
+        },
       });
     });
 

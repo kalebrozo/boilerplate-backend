@@ -186,7 +186,47 @@ describe('TesteGeralService', () => {
       expect(result).toEqual(mockTesteGeral);
       expect(prisma.testeGeral.findUnique).toHaveBeenCalledWith({
         where: { id: 'valid-id' },
-        include: expect.any(Object),
+        select: {
+          id: true,
+          nome: true,
+          descricao: true,
+          valorDecimal: true,
+          valorInteiro: true,
+          valorFloat: true,
+          ativo: true,
+          status: true,
+          categoria: true,
+          dataCriacao: true,
+          dataAtualizacao: true,
+          dataVencimento: true,
+          horaInicio: true,
+          duracao: true,
+          tags: true,
+          metadados: true,
+          configuracao: true,
+          email: true,
+          telefone: true,
+          website: true,
+          cep: true,
+          endereco: true,
+          coordenadas: true,
+          arquivoNome: true,
+          arquivoTamanho: true,
+          arquivoTipo: true,
+          arquivoUrl: true,
+          tenantId: true,
+          criadoPorId: true,
+          atualizadoPorId: true,
+          criadoPor: {
+            select: { id: true, name: true, email: true },
+          },
+          atualizadoPor: {
+            select: { id: true, name: true, email: true },
+          },
+          tenant: {
+            select: { id: true, name: true },
+          },
+        },
       });
     });
 

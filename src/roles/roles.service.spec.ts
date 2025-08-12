@@ -141,7 +141,19 @@ describe('RolesService', () => {
         skip: 0,
         take: 10,
         orderBy: { name: 'asc' },
-        include: { permissions: true },
+        select: {
+          id: true,
+          name: true,
+          permissions: {
+            select: {
+              id: true,
+              action: true,
+              subject: true,
+            },
+          },
+          createdAt: true,
+          updatedAt: true,
+        },
       });
     });
   });
@@ -165,7 +177,19 @@ describe('RolesService', () => {
       expect(result).toEqual(expectedRole);
       expect(prisma.role.findUnique).toHaveBeenCalledWith({
         where: { id: roleId },
-        include: { permissions: true },
+        select: {
+          id: true,
+          name: true,
+          permissions: {
+            select: {
+              id: true,
+              action: true,
+              subject: true,
+            },
+          },
+          createdAt: true,
+          updatedAt: true,
+        },
       });
     });
 

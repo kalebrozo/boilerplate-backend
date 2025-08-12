@@ -39,7 +39,19 @@ export class RolesService {
     const [data, total] = await Promise.all([
       this.prisma.role.findMany({
         where,
-        include: { permissions: true },
+        select: {
+          id: true,
+          name: true,
+          createdAt: true,
+          updatedAt: true,
+          permissions: {
+            select: {
+                id: true,
+                action: true,
+                subject: true,
+              },
+          },
+        },
         skip,
         take,
         orderBy,
@@ -63,7 +75,19 @@ export class RolesService {
   async findOne(id: string) {
     const role = await this.prisma.role.findUnique({
       where: { id },
-      include: { permissions: true },
+      select: {
+        id: true,
+        name: true,
+        createdAt: true,
+        updatedAt: true,
+        permissions: {
+          select: {
+              id: true,
+              action: true,
+              subject: true,
+            },
+        },
+      },
     });
 
     if (!role) {

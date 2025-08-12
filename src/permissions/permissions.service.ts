@@ -39,6 +39,13 @@ export class PermissionsService {
     const [data, total] = await Promise.all([
       this.prisma.permission.findMany({
         where,
+        select: {
+          id: true,
+          action: true,
+          subject: true,
+          createdAt: true,
+          updatedAt: true,
+        },
         skip,
         take,
         orderBy,
@@ -62,6 +69,13 @@ export class PermissionsService {
   async findOne(id: string) {
     const permission = await this.prisma.permission.findUnique({
       where: { id },
+      select: {
+        id: true,
+        action: true,
+        subject: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     if (!permission) {

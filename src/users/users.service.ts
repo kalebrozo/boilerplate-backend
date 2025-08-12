@@ -44,7 +44,19 @@ export class UsersService {
     const [data, total] = await Promise.all([
       this.prisma.user.findMany({
         where,
-        include: { role: true },
+        select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+        updatedAt: true,
+        role: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
         skip,
         take,
         orderBy,
@@ -52,13 +64,8 @@ export class UsersService {
       this.prisma.user.count({ where }),
     ]);
 
-    const usersWithoutPassword = data.map(user => {
-      const { password, ...userWithoutPassword } = user;
-      return userWithoutPassword;
-    });
-
     return {
-      data: usersWithoutPassword,
+      data,
       meta: {
         total,
         page: pagination.page,
@@ -73,15 +80,33 @@ export class UsersService {
   async findOne(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
-      include: { role: { include: { permissions: true } } },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+        updatedAt: true,
+        role: {
+          select: {
+            id: true,
+            name: true,
+            permissions: {
+              select: {
+                id: true,
+                action: true,
+                subject: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    return user;
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {

@@ -144,6 +144,13 @@ describe('TenantsService', () => {
         skip: 0,
         take: 10,
         orderBy: { name: 'asc' },
+        select: {
+          id: true,
+          name: true,
+          schema: true,
+          createdAt: true,
+          updatedAt: true,
+        },
       });
     });
   });
@@ -166,6 +173,13 @@ describe('TenantsService', () => {
       expect(result).toEqual(expectedTenant);
       expect(prisma.tenant.findUnique).toHaveBeenCalledWith({
         where: { id: tenantId },
+        select: {
+          id: true,
+          name: true,
+          schema: true,
+          createdAt: true,
+          updatedAt: true,
+        },
       });
     });
 
