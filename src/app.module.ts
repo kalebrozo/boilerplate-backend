@@ -19,6 +19,7 @@ import { envValidationSchema } from './config/env.validation';
 import { LoggerModule } from './common/logger/logger.module';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
       }
     ]),
     LoggerModule,
+    HealthModule,
     PrismaModule,
     AuthModule,
     UsersModule,
